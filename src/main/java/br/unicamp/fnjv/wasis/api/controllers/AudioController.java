@@ -19,9 +19,7 @@ public class AudioController {
 
     @RequestMapping(value = "load", method = RequestMethod.POST, produces = "application/json")
     public ResponseEntity loadAudio(@RequestParam("file") MultipartFile file) {
-        audioService.loadAudio(file);
-
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(audioService.loadAudio(file), HttpStatus.OK);
     }
 
 }

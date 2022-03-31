@@ -1,6 +1,8 @@
 package br.unicamp.fnjv.wasis.api.utils.multimidia.wrapper;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -60,6 +62,20 @@ public class FfmpegWrapper {
 	        String duration = scanner.findWithinHorizon(durationPattern, 0);
 	        
 	        if (duration == null) {
+				for (int indexParam = 0; indexParam < paramSize; indexParam++) {
+					if (arrayParameters.get(indexParam).equals("-i")) {
+						String sourceFile = arrayParameters.get(indexParam + 1);
+
+						try {
+							Files.deleteIfExists(Paths.get(sourceFile));
+						} catch (Exception e) {
+							// No action
+						} finally {
+							break;
+						}
+					}
+				}
+
 	        	throw new IOException("Invalid audio file");
 	        }
 	        

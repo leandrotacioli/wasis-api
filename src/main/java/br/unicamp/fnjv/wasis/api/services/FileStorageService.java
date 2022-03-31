@@ -1,6 +1,7 @@
 package br.unicamp.fnjv.wasis.api.services;
 
 import br.unicamp.fnjv.wasis.api.config.FileStorageConfig;
+import br.unicamp.fnjv.wasis.api.utils.crypto.SHA256;
 import br.unicamp.fnjv.wasis.api.utils.exceptions.GeneralException;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -11,9 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 
 @Service
 public class FileStorageService {
@@ -31,26 +34,30 @@ public class FileStorageService {
     }
 
     public String storeFile(MultipartFile file) {
-        // Normalize file name
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String storedFileName = "";
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
 
         try {
-            // Check if the file's name contains invalid characters
-            if (fileName.contains("..")) {
-                throw new GeneralException(HttpStatus.INTERNAL_SERVER_ERROR, "Sorry! Filename contains invalid path sequence " + fileName);
+            String fileNameExtension = getFileExtension(file.getOriginalFilename());
+            String hashedFileName = SHA256.getHashFromFile(file);
+            storedFileName = hashedFileName + ((fileNameExtension != null || !fileNameExtension.equals("")) ? ("." + fileNameExtension) : "");
+
+            // Copy file to the target location (Replacing with the SHA-256 Checksum name)
+            Path targetLocation = fileStorageLocation.resolve(storedFileName);
+
+            try {
+                Files.copy(file.getInputStream(), targetLocation);
+            } catch (FileAlreadyExistsException ex) {
+                System.out.println("Could not copy file - Hash: " + hashedFileName + " - File already exists.");
             }
 
-            // Copy file to the target location (Replacing existing file with the same name)
-            Path targetLocation = fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            storedFileName = targetLocation.toFile().getPath();
 
-            fileName = targetLocation.toFile().getPath();
-
-        } catch (IOException ex) {
-            throw new GeneralException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store file " + fileName + ". Please try again!", ex.getMessage());
+        } catch (Exception ex) {
+            throw new GeneralException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store file '" + originalFileName + "'. Please try again!", ex.getMessage());
         }
 
-        return fileName;
+        return storedFileName;
     }
 
     public Resource loadFileAsResource(String fileName) {
@@ -69,6 +76,18 @@ public class FileStorageService {
         }
 
         return resource;
+    }
+
+    public String getFileExtension(String filename) {
+        try {
+            Optional<String> fileExtension = Optional.ofNullable(filename)
+                    .filter(f -> f.contains("."))
+                    .map(f -> f.substring(filename.lastIndexOf(".") + 1));
+
+            return fileExtension.get();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
 }

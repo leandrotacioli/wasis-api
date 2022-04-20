@@ -308,7 +308,7 @@ public class AudioWav {
         int initialChunkData = getChunkDataPosition(initialChunk);
         int finalChunkData = getChunkDataPosition(finalChunk);
 
-        int pointerAmplitudeChunk = initialChunkData - wavDataFinalPosition;
+        int pointerAmplitudeChunk = initialChunkData - wavDataInitialPosition;
 
         // Se 'finalChunkData' for maior que 'wavDataFinalPosition' e menor que 'wavDataSize',
         // temos que extrair novamente os dados do arquivo WAV utilizando o método 'extractWavDataChunk' a partir do 'initialChunk'

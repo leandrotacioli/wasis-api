@@ -50,14 +50,28 @@ public class Preprocessing {
      * <pre>
      * Performs Frame Blocking to break down an audio signal into frames.
      *
-     * Default <i>FRAME_LENGTH</i> = 1024.
-     * Default <i>OVERLAP_SAMPLES</i> = FRAME_LENGTH / 2.
+     * <i>frameLength</i> = 1024.
+     * <i>overlapSamples</i> = <i>frameLength</i> / 2.
      * </pre>
      *
      * @param audioSignal - Audio Signal
      */
     public static double[][] framing(double[] audioSignal) {
         return framing(audioSignal, FRAME_LENGTH, OVERLAP_SAMPLES);
+    }
+
+    /**
+     * <pre>
+     * Performs Frame Blocking to break down an audio signal into frames.
+     *
+     * <i>overlapSamples</i> = <i>frameLength</i> / 2.
+     * </pre>
+     *
+     * @param audioSignal - Audio Signal
+     * @param frameLength - Frame Length
+     */
+    public static double[][] framing(double[] audioSignal, int frameLength) {
+        return framing(audioSignal, frameLength, frameLength / 2);
     }
 
     /**

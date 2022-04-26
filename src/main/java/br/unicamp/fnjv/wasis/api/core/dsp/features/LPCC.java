@@ -64,7 +64,7 @@ public class LPCC extends LPC {
     public void process(double[] audioSignal) {
         double[] preEmphasis = Preprocessing.preEmphasis(audioSignal);
 
-        double[][] frames = Preprocessing.framing(preEmphasis, FRAME_LENGTH, OVERLAP_SAMPLES);
+        double[][] frames = Preprocessing.framing(preEmphasis, FRAME_LENGTH);
 
         processFrames(frames);
     }

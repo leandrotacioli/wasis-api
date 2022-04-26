@@ -26,9 +26,6 @@ public class LPC extends FeatureExtraction {
     /** Number of samples per frame. */
     protected final int FRAME_LENGTH = 1024;
 
-    /** Number of overlapping samples (Usually 50% of the <i>FRAME_LENGTH</i>). */
-    protected final int OVERLAP_SAMPLES = FRAME_LENGTH / 2;
-
     /** Window Function */
     private final String WINDOW_FUNCTION = FFTWindowFunction.HAMMING;
 
@@ -84,7 +81,7 @@ public class LPC extends FeatureExtraction {
         double[] preEmphasis = Preprocessing.preEmphasis(audioSignal);
 
         // Step 2 - Frame Blocking
-        double[][] frames = Preprocessing.framing(preEmphasis, FRAME_LENGTH, OVERLAP_SAMPLES);
+        double[][] frames = Preprocessing.framing(preEmphasis, FRAME_LENGTH);
 
         processFrames(frames);
     }
@@ -101,10 +98,10 @@ public class LPC extends FeatureExtraction {
     @Override
     public void processFrames(double[][] frames) {
         // Step 3 - Windowing - Apply Hamming Window to all frames
-        FFT fft = new FFT(FRAME_LENGTH, WINDOW_FUNCTION);
+        FFTWindowFunction fftWindowFunction = new FFTWindowFunction(WINDOW_FUNCTION);
 
         for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
-            frames[indexFrame] = fft.applyWindow(frames[indexFrame]);
+            frames[indexFrame] = fftWindowFunction.applyWindow(frames[indexFrame]);
         }
 
         reflectionCoefficients = new double[frames.length][lpcOrder + 1];

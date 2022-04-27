@@ -1,11 +1,11 @@
-package br.unicamp.fnjv.wasis.api.core.dsp.fft;
+package br.unicamp.fnjv.wasis.api.core.dsp.windowing;
 
 /**
  * Funções de janelamento - Aprimora as características espectrais de uma amostra de sinal.
  *
  * @author Leandro Tacioli
  */
-public class FFTWindowFunction {
+public class WindowFunction {
 
     public static final String BARTLETT = "BARTLETT";
     public static final String BLACKMAN = "BLACKMAN";
@@ -29,7 +29,7 @@ public class FFTWindowFunction {
      *
      * @param window
      */
-    public FFTWindowFunction(String window) {
+    public WindowFunction(String window) {
         setWindowType(window);
     }
 
@@ -47,16 +47,32 @@ public class FFTWindowFunction {
     }
 
     /**
+     * Aprimora as características espectrais de frames de sinal.
+     *
+     * @param frames
+     *
+     * @return frames - Frames com função de janelamento aplicada
+     */
+    public double[][] applyWindow(double[][] frames) {
+        for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
+            frames[indexFrame] = applyWindow(frames[indexFrame]);
+        }
+
+        return frames;
+    }
+
+    /**
      * Aprimora as características espectrais de uma amostra de sinal.
      *
      * @param data - Amostra
+     *
+     * @return data - Amostra com função de janelamento aplicada
      */
     public double[] applyWindow(double[] data) {
         int sampleSize = data.length;
         int m = sampleSize / 2;
 
         double r;
-        double PI = Math.PI;
         double[] window = new double[sampleSize];
 
         switch (windowType) {
@@ -71,7 +87,7 @@ public class FFTWindowFunction {
 
             // Blackman window
             case BLACKMAN_WINDOW:
-                r = PI / m;
+                r = Math.PI / m;
 
                 for (int n = -m; n < m; n++) {
                     window[m + n] = 0.42f + 0.5f * Math.cos(n * r) + 0.08f * Math.cos(2 * n * r);
@@ -81,7 +97,7 @@ public class FFTWindowFunction {
 
             // Hamming window
             case HAMMING_WINDOW:
-                r = PI / m;
+                r = Math.PI / m;
 
                 for (int n = -m; n < m; n++) {
                     window[m + n] = 0.54f + 0.46f * Math.cos(n * r);
@@ -91,7 +107,7 @@ public class FFTWindowFunction {
 
             // Hanning window
             case HANNING_WINDOW:
-                r = PI / (m + 1);
+                r = Math.PI / (m + 1);
 
                 for (int n = -m; n < m; n++) {
                     window[m + n] = 0.5f + 0.5f * Math.cos(n * r);

@@ -13,20 +13,11 @@ public class FFTColumbia {
     private double[] cos;
     private double[] sin;
 
-    /**
-     * Real Part.
-     */
+    /** Real Part. */
     private double[] real;
 
-    /**
-     * Imaginary Part.
-     */
+    /** Imaginary Part. */
     private double[] imag;
-
-    /**
-     * Amplitude - dBFS
-     */
-    private double[] amplitudes;
 
     /**
      * <pre>
@@ -56,7 +47,7 @@ public class FFTColumbia {
 
     /**
      * <pre>
-     * Returns the Amplitudes in dBFS.
+     * Returns the amplitudes in dBFS.
      *
      * <b>IMPORTANT:</b> The first values correspond to lower frequencies, while the last values correspond to higher frequencies.
      * </pre>
@@ -64,6 +55,17 @@ public class FFTColumbia {
      * @return amplitudes
      */
     public double[] getAmplitudes() {
+        double[] amplitudes = new double[n / 2];
+
+        for (int index = 0; index < n / 2; index++) {
+            double squaredMagnitude = (real[index] * real[index] + imag[index] * imag[index]) / n;
+
+            double amplitudeMagnitude = 10 * Math.log10(squaredMagnitude);
+            amplitudeMagnitude = amplitudeMagnitude - 96.00d;      // 96dB range for 16 bits audio format
+
+            amplitudes[index] = amplitudeMagnitude;
+        }
+
         return amplitudes;
     }
 
@@ -208,18 +210,6 @@ public class FFTColumbia {
 
         real = x;   // Real Part
         imag = y;   // Imaginary Part
-
-        // Amplitudes - dBFS
-        amplitudes = new double[n / 2];
-
-        for (int index = 0; index < n / 2; index++) {
-            double squaredMagnitude = (x[index] * x[index] + y[index] * y[index]) / n;
-
-            double amplitudeMagnitude = 10 * Math.log10(squaredMagnitude);
-            amplitudeMagnitude = amplitudeMagnitude - 96.00d;      // 96dB range for 16 bits audio format
-
-            amplitudes[index] = amplitudeMagnitude;
-        }
     }
 
 }

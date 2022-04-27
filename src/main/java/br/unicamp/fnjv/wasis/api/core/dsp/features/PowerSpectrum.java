@@ -1,7 +1,7 @@
 package br.unicamp.fnjv.wasis.api.core.dsp.features;
 
 import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFT;
-import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFTWindowFunction;
+import br.unicamp.fnjv.wasis.api.core.dsp.windowing.WindowFunction;
 import br.unicamp.fnjv.wasis.api.utils.transformations.RoundNumbers;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public class PowerSpectrum extends FeatureExtraction {
     private final int FRAME_LENGTH = 1024;
 
     /** Window Function */
-    private final String WINDOW_FUNCTION = FFTWindowFunction.HAMMING;
+    private final String WINDOW_FUNCTION = WindowFunction.HAMMING;
 
     /** Maximum frequency (50% of the <i>sampleRate</i>) */
     private double maximumFrequency;
@@ -64,19 +64,13 @@ public class PowerSpectrum extends FeatureExtraction {
         frequencySamples = FRAME_LENGTH / 2;        // Default value = 512
 
         // Computes the final number of coefficients filtering initial and final frequencies
-        List<Integer> coefficients = new ArrayList<Integer>();
-
-        int margin = (int) (maximumFrequency / frequencySamples);   // Margin to take an inferior and superior sample
+        List<Integer> coefficients = new ArrayList<>();
 
         for (int indexFrequency = 0; indexFrequency < frequencySamples; indexFrequency++) {
-            double frequency = maximumFrequency - (maximumFrequency / frequencySamples * indexFrequency);
+            int frequency = (int) ((maximumFrequency / frequencySamples * indexFrequency) + (maximumFrequency / frequencySamples));
 
-            if ((frequency >= initialFrequency - margin) && (frequency <= finalFrequency + margin)) {
-                coefficients.add((int) frequency);
-            }
+            coefficients.add(frequency);
         }
-
-        Collections.sort(coefficients); // Sort the coefficients from lowest to highest frequencies
 
         powerSpectrum = new double[2][coefficients.size()];
 
@@ -110,35 +104,30 @@ public class PowerSpectrum extends FeatureExtraction {
      */
     @Override
     public void processFrames(double[][] frames) {
-        // Step 2 - Windowing - Apply Hamming Window to all frames
-        FFT fft = new FFT(FRAME_LENGTH, WINDOW_FUNCTION);
-
-        for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
-            frames[indexFrame] = fft.applyWindow(frames[indexFrame]);
-        }
+        WindowFunction windowFunction = new WindowFunction(WINDOW_FUNCTION);
+        FFT fft;
 
         // Below computations are all based on individual frames
         for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
-            // Step 3 - FFT
+            // Step 2 - Windowing - Apply Hamming Window to all frames
+            frames[indexFrame] = windowFunction.applyWindow(frames[indexFrame]);
+
+            // Step 3 - Fast Fourier Transform
+            fft = new FFT(FRAME_LENGTH);
             fft.executeFFT(frames[indexFrame]);
 
             double[] amplitudes = fft.getAmplitudes();
 
             // Step 4 - Power Spectrum Coefficients
-            int lastPowerSpectrumValue = 0;
-
             for (int indexFrequency = 0; indexFrequency < frequencySamples; indexFrequency++) {
-                double frequency = maximumFrequency / frequencySamples * indexFrequency;
-                frequency += maximumFrequency / frequencySamples;
+                int frequency = (int) ((maximumFrequency / frequencySamples * indexFrequency) + (maximumFrequency / frequencySamples));
 
-                for (int indexPowerSpectrumValue = lastPowerSpectrumValue; indexPowerSpectrumValue < powerSpectrum[0].length; indexPowerSpectrumValue++) {
-                    if ((int) frequency == powerSpectrum[0][indexPowerSpectrumValue]) {
+                for (int indexPowerSpectrumValue = 0; indexPowerSpectrumValue < powerSpectrum[0].length; indexPowerSpectrumValue++) {
+                    if (frequency == powerSpectrum[0][indexPowerSpectrumValue]) {
                         double decibel = amplitudes[indexFrequency];
 
                         if (decibel > powerSpectrum[1][indexPowerSpectrumValue]) {
                             powerSpectrum[1][indexPowerSpectrumValue] = RoundNumbers.round(decibel, 4);
-
-                            lastPowerSpectrumValue = indexPowerSpectrumValue;
 
                             break;
                         }

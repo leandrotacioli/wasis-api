@@ -1,7 +1,5 @@
 package br.unicamp.fnjv.wasis.api.core.dsp.features;
 
-import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFT;
-import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFTWindowFunction;
 import br.unicamp.fnjv.wasis.api.utils.statistics.BasicStatistics;
 import br.unicamp.fnjv.wasis.api.utils.transformations.RoundNumbers;
 
@@ -175,18 +173,20 @@ public class LPCC extends LPC {
         }
 
         // Calculates mean and standard deviation for each LPCC coefficient
-        lpccMean = new double[lpccOrder];
-        lpccStandardDeviation = new double[lpccOrder];
+        if (totalFrames > 1) {
+            lpccMean = new double[lpccOrder];
+            lpccStandardDeviation = new double[lpccOrder];
 
-        for (int indexCoefficient = 0; indexCoefficient < lpccOrder; indexCoefficient++) {
-            double[] coefficientValues = new double[totalFrames];
+            for (int indexCoefficient = 0; indexCoefficient < lpccOrder; indexCoefficient++) {
+                double[] coefficientValues = new double[totalFrames];
 
-            for (int indexFrame = 0; indexFrame < totalFrames; indexFrame++) {
-                coefficientValues[indexFrame] = lpcc[indexFrame][indexCoefficient];
+                for (int indexFrame = 0; indexFrame < totalFrames; indexFrame++) {
+                    coefficientValues[indexFrame] = lpcc[indexFrame][indexCoefficient];
+                }
+
+                lpccMean[indexCoefficient] = RoundNumbers.round(BasicStatistics.mean(coefficientValues), 4);
+                lpccStandardDeviation[indexCoefficient] = RoundNumbers.round(BasicStatistics.standardDeviation(coefficientValues), 4);
             }
-
-            lpccMean[indexCoefficient] = RoundNumbers.round(BasicStatistics.mean(coefficientValues), 4);
-            lpccStandardDeviation[indexCoefficient] = RoundNumbers.round(BasicStatistics.standardDeviation(coefficientValues), 4);
         }
     }
 

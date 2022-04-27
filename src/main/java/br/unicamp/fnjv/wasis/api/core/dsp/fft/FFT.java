@@ -8,30 +8,14 @@ package br.unicamp.fnjv.wasis.api.core.dsp.fft;
 public class FFT {
 
     private FFTColumbia fftColumbia;
-    private FFTWindowFunction fftWindowFunction;
 
     /**
      * Transforma amostra do domínio de tempo para o domínio de frequência.
      *
      * @param fftSampleSize  - Número de amostras da FFT (Potência de 2)
-     * @param windowFunction - Função de janelamento
      */
-    public FFT(int fftSampleSize, String windowFunction) {
+    public FFT(int fftSampleSize) {
         this.fftColumbia = new FFTColumbia(fftSampleSize);
-        this.fftWindowFunction = new FFTWindowFunction(windowFunction);
-    }
-
-    /**
-     * Aplica a função de janelamento.
-     *
-     * @param data - Amostra no domínio de tempo
-     *
-     * @return windowing
-     */
-    public double[] applyWindow(double[] data) {
-        double[] windowing = fftWindowFunction.applyWindow(data);
-
-        return windowing;
     }
 
     /**

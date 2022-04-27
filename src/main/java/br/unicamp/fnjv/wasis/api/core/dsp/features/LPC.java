@@ -1,7 +1,6 @@
 package br.unicamp.fnjv.wasis.api.core.dsp.features;
 
-import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFT;
-import br.unicamp.fnjv.wasis.api.core.dsp.fft.FFTWindowFunction;
+import br.unicamp.fnjv.wasis.api.core.dsp.windowing.WindowFunction;
 import br.unicamp.fnjv.wasis.api.utils.statistics.BasicStatistics;
 import br.unicamp.fnjv.wasis.api.utils.transformations.RoundNumbers;
 
@@ -27,7 +26,7 @@ public class LPC extends FeatureExtraction {
     protected final int FRAME_LENGTH = 1024;
 
     /** Window Function */
-    private final String WINDOW_FUNCTION = FFTWindowFunction.HAMMING;
+    private final String WINDOW_FUNCTION = WindowFunction.HAMMING;
 
     /** Lambda. */
     private final double LAMBDA = 0.0;
@@ -97,12 +96,7 @@ public class LPC extends FeatureExtraction {
      */
     @Override
     public void processFrames(double[][] frames) {
-        // Step 3 - Windowing - Apply Hamming Window to all frames
-        FFTWindowFunction fftWindowFunction = new FFTWindowFunction(WINDOW_FUNCTION);
-
-        for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
-            frames[indexFrame] = fftWindowFunction.applyWindow(frames[indexFrame]);
-        }
+        WindowFunction windowFunction = new WindowFunction(WINDOW_FUNCTION);
 
         reflectionCoefficients = new double[frames.length][lpcOrder + 1];
         autoregressiveParameters = new double[frames.length][lpcOrder + 1];
@@ -110,6 +104,9 @@ public class LPC extends FeatureExtraction {
 
         // Below computations are all based on individual frames
         for (int indexFrame = 0; indexFrame < frames.length; indexFrame++) {
+            // Step 3 - Windowing - Apply Hamming Window to all frames
+            frames[indexFrame] = windowFunction.applyWindow(frames[indexFrame]);
+
             // Step 4 - Autocorrelation
             double[] autoCorrelation = autoCorrelation(frames[indexFrame]);
 
@@ -254,18 +251,20 @@ public class LPC extends FeatureExtraction {
         }
 
         // Calculates mean and standard deviation for each LPC coefficient
-        lpcMean = new double[lpcOrder];
-        lpcStandardDeviation = new double[lpcOrder];
+        if (totalFrames > 1) {
+            lpcMean = new double[lpcOrder];
+            lpcStandardDeviation = new double[lpcOrder];
 
-        for (int indexCoefficient = 0; indexCoefficient < lpcOrder; indexCoefficient++) {
-            double[] coefficientValues = new double[totalFrames];
+            for (int indexCoefficient = 0; indexCoefficient < lpcOrder; indexCoefficient++) {
+                double[] coefficientValues = new double[totalFrames];
 
-            for (int indexFrame = 0; indexFrame < totalFrames; indexFrame++) {
-                coefficientValues[indexFrame] = lpc[indexFrame][indexCoefficient];
+                for (int indexFrame = 0; indexFrame < totalFrames; indexFrame++) {
+                    coefficientValues[indexFrame] = lpc[indexFrame][indexCoefficient];
+                }
+
+                lpcMean[indexCoefficient] = RoundNumbers.round(BasicStatistics.mean(coefficientValues), 4);
+                lpcStandardDeviation[indexCoefficient] = RoundNumbers.round(BasicStatistics.standardDeviation(coefficientValues), 4);
             }
-
-            lpcMean[indexCoefficient] = RoundNumbers.round(BasicStatistics.mean(coefficientValues), 4);
-            lpcStandardDeviation[indexCoefficient] = RoundNumbers.round(BasicStatistics.standardDeviation(coefficientValues), 4);
         }
     }
 

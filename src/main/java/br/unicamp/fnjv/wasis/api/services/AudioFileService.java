@@ -17,4 +17,8 @@ public class AudioFileService {
         return audioFileRepository.findById(id);
     }
 
+    public Optional<AudioFile> getAudioFileByHash(String hash) {
+        return audioFileRepository.findByAudioFileHash(hash);
+    }
+
 }
